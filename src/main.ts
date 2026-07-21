@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import './style.css'
 import { SceneDiffRenderer } from './diff-renderer'
 import { exampleScene, parseSceneGraph, type SceneGraph, type SceneToolCall } from './scene-graph'
@@ -18,6 +19,13 @@ scene.add(ambientLight, directionalLight)
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const diffRenderer = new SceneDiffRenderer(scene, camera, ambientLight, directionalLight)
+const controls = new OrbitControls(camera, renderer.domElement)
+controls.enableDamping = true
+controls.dampingFactor = 0.08
+controls.enablePan = true
+controls.enableZoom = true
+controls.enableRotate = true
+diffRenderer.setOrbitControls(controls)
 let currentScene: SceneGraph = exampleScene
 let lastFocusedId: string | undefined
 
@@ -34,6 +42,7 @@ function draw(): void {
 }
 
 function animate(time: number): void {
+  controls.update()
   diffRenderer.update(time)
   renderer.render(scene, camera)
   requestAnimationFrame(animate)

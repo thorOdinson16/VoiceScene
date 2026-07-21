@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import type { AnimationState, SceneGraph, SceneObject } from './scene-graph'
 
 type RenderedObject = { mesh: THREE.Mesh; type: SceneObject['type'] }
@@ -23,6 +24,7 @@ export class SceneDiffRenderer {
   private animations: AnimationState[] = []
   private readonly orbitRadii = new Map<string, number>()
   private previous?: SceneGraph
+  private orbitControls?: OrbitControls
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -30,6 +32,10 @@ export class SceneDiffRenderer {
     private readonly ambientLight: THREE.AmbientLight,
     private readonly directionalLight: THREE.DirectionalLight,
   ) {}
+
+  setOrbitControls(controls: OrbitControls): void {
+    this.orbitControls = controls
+  }
 
   render(next: SceneGraph): void {
     const previousById = new Map(this.previous?.objects.map((object) => [object.id, object]))
@@ -71,6 +77,10 @@ export class SceneDiffRenderer {
     this.camera.fov = next.camera.fov
     this.camera.updateProjectionMatrix()
     this.camera.lookAt(...next.camera.target)
+    if (this.orbitControls) {
+      this.orbitControls.target.set(...next.camera.target)
+      this.orbitControls.update()
+    }
     this.ambientLight.color.set(next.lighting.ambient.color)
     this.ambientLight.intensity = next.lighting.ambient.intensity
     this.directionalLight.color.set(next.lighting.directional.color)
