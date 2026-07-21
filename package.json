@@ -1,0 +1,30 @@
+{
+  "name": "voice-scene-builder",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k \"npm:dev:client\" \"npm:dev:server\"",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "dev:client": "vite",
+    "dev:server": "tsx watch src-server/index.ts"
+  },
+  "dependencies": {
+    "three": "^0.180.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "openai": "^6.0.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.7",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.20.5",
+    "@types/node": "^24.10.1"
+  }
+}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Scene Renderer</title>
+  </head>
+  <body>
+    <main>
+      <section class="controls" aria-label="Scene JSON input">
+        <h1>JSON Scene Renderer</h1>
+        <p>Paste a scene object and apply it to update the live three.js scene.</p>
+        <label for="scene-json">Scene JSON</label>
+        <textarea id="scene-json" spellcheck="false" aria-describedby="status"></textarea>
+        <button id="apply-scene" type="button">Apply scene</button>
+        <p id="status" role="status"></p>
+        <hr />
+        <h2>Voice input</h2>
+        <button id="push-to-talk" type="button">Hold to speak</button>
+        <p id="voice-status" role="status"></p>
+        <label for="transcript">Transcript</label>
+        <textarea id="transcript" readonly placeholder="Your transcript will appear here."></textarea>
+      </section>
+      <canvas id="scene-canvas" aria-label="3D scene preview"></canvas>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
