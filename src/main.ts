@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import './style.css'
 import { SceneDiffRenderer } from './diff-renderer'
-import { exampleScene, parseSceneGraph, type SceneGraph } from './scene-graph'
+import { exampleScene, parseSceneGraph, type SceneGraph, type SceneToolCall } from './scene-graph'
 
 const canvas = document.querySelector<HTMLCanvasElement>('#scene-canvas')!
 const input = document.querySelector<HTMLTextAreaElement>('#scene-json')!
@@ -19,6 +19,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 const diffRenderer = new SceneDiffRenderer(scene, camera, ambientLight, directionalLight)
 let currentScene: SceneGraph = exampleScene
+let lastFocusedId: string | undefined
 
 function resize(): void {
   const { width, height } = canvas.getBoundingClientRect()
@@ -30,6 +31,12 @@ function resize(): void {
 function draw(): void {
   resize()
   renderer.render(scene, camera)
+}
+
+function animate(time: number): void {
+  diffRenderer.update(time)
+  renderer.render(scene, camera)
+  requestAnimationFrame(animate)
 }
 
 function applyInput(): void {
@@ -50,6 +57,7 @@ input.value = JSON.stringify(exampleScene, null, 2)
 button.addEventListener('click', applyInput)
 window.addEventListener('resize', draw)
 applyInput()
+requestAnimationFrame(animate)
 
 let recorder: MediaRecorder | undefined
 let recordingStream: MediaStream | undefined
@@ -115,12 +123,15 @@ async function sendAgentTurn(transcriptText: string): Promise<void> {
     const response = await fetch('/api/agent-turn', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript: transcriptText, currentScene }),
+      body: JSON.stringify({ transcript: transcriptText, currentScene, context: { lastFocusedId } }),
     })
-    const payload = await response.json() as { scene?: SceneGraph; clarification?: string; error?: string }
+    const payload = await response.json() as { scene?: SceneGraph; toolCalls?: SceneToolCall[]; clarification?: string; error?: string }
     if (!response.ok) throw new Error(payload.error || 'Scene update failed.')
     if (!payload.scene) throw new Error('The agent did not return a scene.')
     currentScene = parseSceneGraph(payload.scene)
+    for (const call of payload.toolCalls ?? []) {
+      if ('id' in call.arguments) lastFocusedId = call.arguments.id
+    }
     diffRenderer.render(currentScene)
     input.value = JSON.stringify(currentScene, null, 2)
     draw()

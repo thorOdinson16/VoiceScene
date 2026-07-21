@@ -29,7 +29,7 @@ app.post('/api/agent-turn', async (request, response) => {
   if (typeof request.body?.transcript !== 'string' || !request.body.transcript.trim()) return response.status(400).json({ error: 'A transcript is required.' })
   try {
     const currentScene = parseSceneGraph(request.body.currentScene)
-    const agentTurn = await runAgent(request.body.transcript, currentScene)
+    const agentTurn = await runAgent(request.body.transcript, currentScene, request.body.context)
     response.json({ scene: applyToolCalls(currentScene, agentTurn.toolCalls), ...agentTurn })
   } catch (error) {
     console.error('Agent turn failed:', error)

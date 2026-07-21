@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import type { SceneGraph, SceneObject } from './scene-graph'
+import type { AnimationState, SceneGraph, SceneObject } from './scene-graph'
 
 type RenderedObject = { mesh: THREE.Mesh; type: SceneObject['type'] }
 
@@ -20,6 +20,8 @@ function applyObject(mesh: THREE.Mesh, object: SceneObject): void {
 /** Keeps three.js objects in sync with JSON, touching only added, changed, or deleted entries. */
 export class SceneDiffRenderer {
   private readonly rendered = new Map<string, RenderedObject>()
+  private animations: AnimationState[] = []
+  private readonly orbitRadii = new Map<string, number>()
   private previous?: SceneGraph
 
   constructor(
@@ -74,6 +76,31 @@ export class SceneDiffRenderer {
     this.directionalLight.color.set(next.lighting.directional.color)
     this.directionalLight.intensity = next.lighting.directional.intensity
     this.directionalLight.position.set(...next.lighting.directional.position)
+    this.animations = next.animations ?? []
+    const orbitIds = new Set(this.animations.filter((animation) => animation.type === 'orbit').map((animation) => animation.id))
+    for (const id of this.orbitRadii.keys()) {
+      if (!orbitIds.has(id)) this.orbitRadii.delete(id)
+    }
+    for (const animation of this.animations) {
+      if (animation.type !== 'orbit' || this.orbitRadii.has(animation.id)) continue
+      const rendered = this.rendered.get(animation.id)
+      if (rendered) this.orbitRadii.set(animation.id, rendered.mesh.position.length())
+    }
     this.previous = next
+  }
+
+  update(elapsed: number): void {
+    for (const animation of this.animations) {
+      const rendered = this.rendered.get(animation.id)
+      if (!rendered) continue
+      if (animation.type === 'spin') {
+        rendered.mesh.rotation.y = elapsed * animation.speed
+      } else {
+        const radius = this.orbitRadii.get(animation.id)
+        if (radius === undefined) continue
+        rendered.mesh.position.x = Math.cos(elapsed * animation.speed) * radius
+        rendered.mesh.position.z = Math.sin(elapsed * animation.speed) * radius
+      }
+    }
   }
 }
